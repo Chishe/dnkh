@@ -1,0 +1,33 @@
+{
+  "name": "dnkh-dashboard",
+  "version": "2.0.0",
+  "private": true,
+  "description": "DNKH dashboard powered by Fastify",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "check": "node --check src/server.js && node --check src/app.js",
+    "test": "node --test test/app.test.js test/html.test.js test/pm2.test.js",
+    "pm2:start": "pm2 startOrReload ecosystem.config.js --env production --update-env",
+    "pm2:restart": "pm2 restart dnkh-dashboard --update-env",
+    "pm2:stop": "pm2 stop dnkh-dashboard",
+    "pm2:delete": "pm2 delete dnkh-dashboard",
+    "pm2:logs": "pm2 logs dnkh-dashboard",
+    "pm2:status": "pm2 status dnkh-dashboard"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/formbody": "^9.0.0",
+    "@fastify/static": "^10.1.4",
+    "fastify": "^5.12.5",
+    "gauge.js": "^0.2.1",
+    "mysql2": "^3.24.4",
+    "pm2": "^7.0.4"
+  },
+  "overrides": {
+    "js-yaml": "^4.3.2"
+  }
+}

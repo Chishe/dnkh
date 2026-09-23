@@ -1,0 +1,292 @@
+html {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+body {
+    background-color: grey;
+    padding-left: 1vw;
+}
+
+a {
+    text-decoration: none;
+}
+
+.card-body {
+    -ms-flex: 1 1 auto;
+    flex: 1 1 auto;
+    min-height: 1px;
+    padding: 1.25rem;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+/* .card {
+    width: 12rem;
+    height: 100%;
+} */
+
+.card-lane {
+    border: none;
+    width: 100%;
+    height: 100%;
+    background-color: grey;
+}
+
+.card-main {
+    color: white;
+    font-size: 1.2rem;
+    text-align: center;
+    text-wrap: balance;
+    background-color: dimgrey;
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+.card-nav {
+    color: white;
+    font-size: 1.2rem;
+    /* background-color: dimgrey; */
+    border: none
+}
+
+.card-navsub {
+    color: white;
+    font-size: 1.1rem;
+    /* background-color: grey; */
+    border: none;
+}
+
+.card-sub {
+    color: white;
+    font-size: 1.1rem;
+    text-align: center;
+    background: repeating-linear-gradient(45deg,
+            grey,
+            grey 10px,
+            dimgrey 10px,
+            dimgrey 20px);
+    border: none;
+    width: 100%;
+    height: 100%;
+}
+
+.divScroll {
+    overflow-y: auto;
+    height: 55vh;
+    /* height: 100%; */
+    border: 1px solid white;
+}
+
+.divScroll table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+.divScroll td {
+    border: 1px solid white;
+    padding: 1vh;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+    /* background-color: lightgray; */
+}
+
+.first_row th {
+    position: sticky;
+    top: 0vh;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
+    background-color: #606060;
+    padding: 1vh;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+
+.header {
+    width: 100%;
+}
+
+.head_page {
+    color: white;
+    font-size: 36px;
+    font-weight: bold;
+    text-transform: uppercase;
+    /* text-decoration-line: underline; */
+}
+
+.layout_bg {
+    background-color: dimgray;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    border-radius: 1vh;
+    text-orientation: sideways-right;
+}
+
+.layout tr {
+    height: 5vh;
+}
+
+.layout th,
+.layout td {
+    width: 5vw;
+}
+
+.logo {
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 12vh;
+}
+
+.main {
+    margin-bottom: 0px;
+    font-size: 60px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.menu {
+    color: white;
+    font-size: 1.5rem;
+    margin-left: 1vw;
+}
+
+.nav {
+    align-items: center;
+    display: inline-block;
+    padding: 0px;
+    background-color: #303030;
+    border-radius: 10px;
+    height: max-content;
+}
+
+.page {
+    /* justify-content: center; */
+    align-items: center;
+    display: flex;
+    font-size: 1.2rem;
+    font-weight: bold;
+    text-align: center;
+    color: #ffffff;
+}
+
+.page_button {
+    background-color: dimgray;
+    border-radius: 5px;
+    height: 5vh;
+    color: white;
+    margin-bottom: 2vh;
+}
+
+.pageTrend {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-align: center;
+    color: #ffffff;
+}
+
+.rectangle-normal {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(0, 180, 40);
+    border-radius: 5px;
+}
+
+.rectangle-warning {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(255, 165, 0);
+    border-radius: 5px;
+}
+
+.rectangle-alarm {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgb(255, 0, 0);
+    border-radius: 5px;
+}
+
+.search-box {
+    margin-bottom: 2vh;
+}
+
+.second_row th {
+    position: sticky;
+    top: 4.3vh;
+    border-left: 1px solid white;
+    border-right: 1px solid white;
+    background-color: #707070;
+    padding: 1vh;
+    text-align: center;
+    color: white;
+    font-weight: bold;
+}
+
+.topic {
+    margin: 10px;
+}
+
+.topicName {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: gold;
+    margin: 0px;
+    border: solid white 1px;
+}
+
+.work-area {
+    height: 100vh;
+    width: 90vw;
+    background-color: dimgray;
+    border-radius: 15px;
+}
+
+
+@media screen and (min-width: 1024px) {
+    /* Add specific styles for larger screens here */
+}
+
+/* Styles for medium-sized screens (tablets and iPads) */
+@media screen and (max-width: 1023px) and (min-width: 768px) {
+    /* Add specific styles for medium-sized screens here */
+}
+
+/* Styles for smaller screens (phones) */
+@media screen and (max-width: 767px) {
+    /* Add specific styles for smaller screens here */
+}
+
+/* Styles for iPads in portrait mode */
+@media screen and (device-width: 768px) and (device-height: 1024px) and (orientation: portrait) {
+    /* Add specific styles for iPads in portrait mode here */
+}
+
+/* Styles for iPads in landscape mode */
+@media screen and (device-width: 768px) and (device-height: 1024px) and (orientation: landscape) {
+    /* Add specific styles for iPads in landscape mode here */
+}

@@ -30,6 +30,31 @@ test('legacy PHP page is rendered as HTML without PHP instructions', async () =>
   assert.doesNotMatch(response.body, /<\?(?:php|=)/i);
 });
 
+test('new helium adjustment page and its Fastify endpoints are registered', async () => {
+  const response = await app.inject({ method: 'GET', url: '/traceability/pokayoke_core_leakrate_adjust.php' });
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /POKAYOKE CORE LEAKRATE ADJUST/i);
+  assert.match(response.body, /class="adjust-toolbar"/);
+  assert.doesNotMatch(response.body, /<\?(?:php|=)/i);
+  assert.equal(app.hasRoute({ method: 'POST', url: '/server/helium_adjust.php' }), true);
+  assert.equal(app.hasRoute({ method: 'POST', url: '/server/helium_update.php' }), true);
+
+  const invalidSearch = await app.inject({
+    method: 'POST',
+    url: '/server/helium_adjust.php',
+    payload: { date: 'not-a-date' },
+    headers: { 'content-type': 'application/x-www-form-urlencoded' }
+  });
+  const invalidUpdate = await app.inject({
+    method: 'POST',
+    url: '/server/helium_update.php',
+    payload: {},
+    headers: { 'content-type': 'application/x-www-form-urlencoded' }
+  });
+  assert.equal(invalidSearch.statusCode, 400);
+  assert.equal(invalidUpdate.statusCode, 400);
+});
+
 test('private runtime files are not exposed as static assets', async () => {
   for (const url of ['/package.json', '/src/server.js', '/server/search_server.php', '/.env.example']) {
     const response = await app.inject({ method: 'GET', url });

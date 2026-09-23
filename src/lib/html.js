@@ -4,6 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const config = require('../config');
 const sourceCache = new Map();
+const UI_VERSION = '2026092304';
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -43,6 +44,7 @@ function valueFromExpression(expression, context) {
 
 function renderLegacyPage(relativePath, context = {}) {
   let html = resolveIncludes(readSource(relativePath), relativePath);
+  html = html.replace(/(href=["'][^"']*style\.css)(["'])/gi, `$1?v=${UI_VERSION}$2`);
   html = html.replace(/<\?=\s*([\s\S]*?)\s*\?>/g, (_all, expression) => valueFromExpression(expression.trim(), context));
   html = html.replace(/<\?php\s+foreach\s*\(\$(\w+)\s+as\s+\$(\w+)\)\s*:\s*\?>\s*<td><\?php\s+echo\s+(?:round\()?\$\w+(?:,\s*2\))?\s*;\s*\?><\/td>\s*<\?php\s+endforeach\s*;\s*\?>/g,
     (_all, listName) => (context[listName] ?? []).map((value) => `<td>${escapeHtml(Number.isFinite(value) ? Math.round(value * 100) / 100 : value)}</td>`).join(''));

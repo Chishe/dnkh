@@ -58,6 +58,24 @@ async function heliumPercentage() {
   return rows;
 }
 
+async function heliumAdjust(selectedDate) {
+  const date = selectedDate || today();
+  const [rows] = await packing.execute(`
+    SELECT core_code, core_part_no, assy_code, assy_line, nb_pd
+    FROM helium_leak
+    WHERE nb_pd = ? AND COALESCE(he_judge, '') = ''
+    ORDER BY core_code`, [date]);
+  return rows;
+}
+
+async function passHeliumLeak({ coreCode, selectedDate }) {
+  const [result] = await packing.execute(`
+    UPDATE helium_leak
+    SET he_judge = 'OK'
+    WHERE core_code = ? AND nb_pd = ? AND COALESCE(he_judge, '') = ''`, [coreCode, selectedDate]);
+  return { updated: result.affectedRows };
+}
+
 async function heliumLaneStock() {
   const lanes = await Promise.all(['Lane1', 'Lane2'].map(async (lane) => {
     const [rows] = await packing.execute("SELECT * FROM core_export WHERE input_date != '' AND output_date = '' AND lane = ? ORDER BY id DESC LIMIT 1", [lane]);
@@ -141,4 +159,7 @@ async function insertPatrol(body) {
   await machine.execute(`INSERT INTO ll_patrol (${columns}) VALUES (${placeholders})`, values);
 }
 
-module.exports = { latestConditions, chartData, alarmRows, heliumPercentage, heliumLaneStock, heliumRatio, updateLane, insertPatrol };
+module.exports = {
+  latestConditions, chartData, alarmRows, heliumPercentage, heliumAdjust, passHeliumLeak,
+  heliumLaneStock, heliumRatio, updateLane, insertPatrol
+};

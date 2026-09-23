@@ -188,66 +188,209 @@
     }
 </style>
 <script>
-    const socket = new WebSocket("ws://192.168.2.101:1880/ws/core_packing");
-    socket.onopen = function(event) {
-        console.log('WebSocket is connected.');
-    };
+    let socket = null;
+    let reconnectTimer = null;
 
-    socket.onmessage = function(event) {
-        const res = JSON.parse(event.data);
-        const kanban = res.data.kanban;
-        const ratio = res.data.ratio;
-        const judgeText = res.data.judge;
-        const value = res.data.value;
+    const WS_URL = "ws://192.168.2.101:1880/ws/core_packing";
 
-        document.getElementById('part-no').value = kanban;
-        // document.getElementById('ratio').value = ratio;
-        document.getElementById('judge').value = judgeText;
+    function connectWebSocket() {
 
-        const judgeInput = document.getElementById('judge');
-        var messageElement = document.getElementById('message');
-        judgeInput.value = judgeText;
-
-        if (value === 'OK') {
-            judgeInput.classList.remove('ng');
-            judgeInput.classList.add('ok');
-            messageElement
-            messageElement.textContent = "READY TO PACK";
-            messageElement.style.backgroundColor = 'green';
-            messageElement.className = 'green';
-        } else if (value === 'bypass') {
-            judgeInput.classList.remove('ng');
-            judgeInput.classList.add('ok');
-            messageElement
-            messageElement.textContent = "ASSY SPARE PART";
-            messageElement.style.backgroundColor = 'green';
-            messageElement.className = 'green';
-        } else if (value === 'wrong') {
-            judgeInput.classList.remove('ok');
-            judgeInput.classList.add('ng');
-            messageElement.textContent = "UNKNOWN";
-            messageElement.style.backgroundColor = 'red';
-            messageElement.className = 'red';
-        } else if (value === 'reset') {
-            judgeInput.classList.remove('ng');
-            judgeInput.classList.remove('ok');
-            messageElement
-            messageElement.textContent = "Waiting for scan ...";
-            messageElement.style.backgroundColor = 'yellow';
-        } else {
-            judgeInput.classList.remove('ok');
-            judgeInput.classList.add('ng');
-            messageElement.textContent = "NOT READY TO PACK";
-            messageElement.style.backgroundColor = 'red';
-            messageElement.className = 'red';
+        // ป้องกันการสร้าง WebSocket ซ้ำ
+        if (
+            socket &&
+            (
+                socket.readyState === WebSocket.OPEN ||
+                socket.readyState === WebSocket.CONNECTING
+            )
+        ) {
+            return;
         }
-    };
 
-    socket.onerror = function(error) {
-        console.error('WebSocket Error: ' + error);
-    };
+        console.log("Connecting WebSocket...");
 
-    socket.onclose = function(event) {
-        console.log('WebSocket is closed now.');
-    };
+        socket = new WebSocket(WS_URL);
+
+        // =========================
+        // CONNECTED
+        // =========================
+        socket.onopen = function(event) {
+
+            console.log("WebSocket is connected.");
+
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+                reconnectTimer = null;
+            }
+        };
+
+
+        // =========================
+        // RECEIVE DATA
+        // =========================
+        socket.onmessage = function(event) {
+
+            try {
+
+                const res = JSON.parse(event.data);
+
+                const kanban = res.data.kanban;
+                const ratio = res.data.ratio;
+                const judgeText = res.data.judge;
+                const value = res.data.value;
+
+                document.getElementById('part-no').value = kanban;
+
+                // document.getElementById('ratio').value = ratio;
+
+                const judgeInput =
+                    document.getElementById('judge');
+
+                const messageElement =
+                    document.getElementById('message');
+
+                judgeInput.value = judgeText;
+
+
+                // =========================
+                // OK
+                // =========================
+                if (value === 'OK') {
+
+                    judgeInput.classList.remove('ng');
+                    judgeInput.classList.add('ok');
+
+                    messageElement.textContent =
+                        "READY TO PACK";
+
+                    messageElement.style.backgroundColor =
+                        'green';
+
+                    messageElement.className =
+                        'green';
+
+
+                // =========================
+                // BYPASS
+                // =========================
+                } else if (value === 'bypass') {
+
+                    judgeInput.classList.remove('ng');
+                    judgeInput.classList.add('ok');
+
+                    messageElement.textContent =
+                        "ASSY SPARE PART";
+
+                    messageElement.style.backgroundColor =
+                        'green';
+
+                    messageElement.className =
+                        'green';
+
+
+                // =========================
+                // WRONG
+                // =========================
+                } else if (value === 'wrong') {
+
+                    judgeInput.classList.remove('ok');
+                    judgeInput.classList.add('ng');
+
+                    messageElement.textContent =
+                        "UNKNOWN";
+
+                    messageElement.style.backgroundColor =
+                        'red';
+
+                    messageElement.className =
+                        'red';
+
+
+                // =========================
+                // RESET
+                // =========================
+                } else if (value === 'reset') {
+
+                    judgeInput.classList.remove('ng');
+                    judgeInput.classList.remove('ok');
+
+                    messageElement.textContent =
+                        "Waiting for scan ...";
+
+                    messageElement.style.backgroundColor =
+                        'yellow';
+
+
+                // =========================
+                // NOT READY
+                // =========================
+                } else {
+
+                    judgeInput.classList.remove('ok');
+                    judgeInput.classList.add('ng');
+
+                    messageElement.textContent =
+                        "NOT READY TO PACK";
+
+                    messageElement.style.backgroundColor =
+                        'red';
+
+                    messageElement.className =
+                        'red';
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Invalid WebSocket data:",
+                    error
+                );
+            }
+        };
+
+
+        // =========================
+        // ERROR
+        // =========================
+        socket.onerror = function(error) {
+
+            console.error(
+                "WebSocket Error:",
+                error
+            );
+        };
+
+
+        // =========================
+        // DISCONNECTED
+        // =========================
+        socket.onclose = function(event) {
+
+            console.log(
+                "WebSocket disconnected."
+            );
+
+            socket = null;
+
+            console.log(
+                "Reconnect in 3 seconds..."
+            );
+
+            // ป้องกัน timer ซ้อน
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+            }
+
+            reconnectTimer = setTimeout(
+                connectWebSocket,
+                3000
+            );
+        };
+    }
+
+
+    // =========================
+    // FIRST CONNECTION
+    // =========================
+    connectWebSocket();
+
 </script>

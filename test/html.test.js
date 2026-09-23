@@ -19,6 +19,11 @@ test('legacy form values are escaped before being placed into HTML', () => {
   assert.doesNotMatch(html, /<\?(?:php|=)/i);
 });
 
+test('legacy pages use a versioned shared stylesheet so deployed UI updates bypass stale browser caches', () => {
+  const html = renderLegacyPage('traceability/searching.php');
+  assert.match(html, /href=["']\.\.\/style\.css\?v=\d+["']/);
+});
+
 test('renderRows preserves alarm highlighting and escapes database values', () => {
   const html = renderRows(
     'trendcontrol/fin11_5d/history_mc.php',

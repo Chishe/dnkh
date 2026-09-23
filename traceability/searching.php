@@ -5,7 +5,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width:device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
@@ -312,7 +312,7 @@
                             <!-- <input type="submit" value="Search"> -->
                         </div>
 
-
+                    </div>
                 </form>
                 <?php
                 // ตรวจสอบว่ามีค่าส่งมาใน $_GET หรือไม่
@@ -323,7 +323,7 @@
 
 
                 ?>
-                <form action="searching.php" method="get">
+                <form action="searching.php" method="get" class="date-range-form">
                     <label for="column" class="text">Select Column :</label>
                     <select id="column" name="column" required>
                         <option value="" <?= $column == '' ? 'selected' : '' ?>>- select -</option>
@@ -341,7 +341,6 @@
 
                     <input type="submit" value="Search">
                 </form>
-            </div>
             <div class="divScroll">
                 <table id="searching" class="display">
                     <thead>

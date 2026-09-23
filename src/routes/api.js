@@ -1,7 +1,12 @@
 'use strict';
 
 const { escapeHtml } = require('../lib/html');
-const { latestConditions, chartData, alarmRows, heliumPercentage, heliumLaneStock, updateLane, insertPatrol } = require('../services/machine');
+const {
+  latestConditions, chartData, alarmRows, heliumPercentage, heliumAdjust, passHeliumLeak,
+  heliumLaneStock, updateLane, insertPatrol
+} = require('../services/machine');
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 function trendEndpointPaths(file) {
   return ['fin11_5d', 'flux_1', 'flux_4'].map((line) => `/trendcontrol/${line}/server/${file}`);
@@ -19,6 +24,23 @@ module.exports = async function apiRoutes(app) {
     const rows = await heliumPercentage();
     reply.type('text/html; charset=utf-8');
     return rows.map((row) => `<tr><td>${escapeHtml(row.nb_pd)}</td><td>${escapeHtml(row.core_part_no)}</td><td>${escapeHtml(row.count_all)}</td><td>${escapeHtml(row.count_ng)}</td><td>${escapeHtml(row.percent)}</td></tr>`).join('') || 'No results found';
+  });
+
+  app.post('/server/helium_adjust.php', async (request, reply) => {
+    const date = request.body?.date;
+    if (date && !ISO_DATE.test(date)) return reply.code(400).send({ error: 'Invalid date format' });
+    return heliumAdjust(date);
+  });
+
+  app.post('/server/helium_update.php', async (request, reply) => {
+    const coreCode = String(request.body?.core_code || '').trim();
+    const selectedDate = request.body?.date;
+    if (!coreCode || !ISO_DATE.test(selectedDate || '')) {
+      return reply.code(400).send({ error: 'Core code and date are required' });
+    }
+    const result = await passHeliumLeak({ coreCode, selectedDate });
+    if (!result.updated) return reply.code(404).send({ error: 'Pending record not found' });
+    return { ok: true, updated: result.updated };
   });
 
   app.get('/server/helium_lane_stock.php', async (_request, reply) => {

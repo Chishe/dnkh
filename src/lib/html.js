@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const config = require('../config');
 const sourceCache = new Map();
-const UI_VERSION = '2026092304';
+const UI_VERSION = '2026092306';
 
 function escapeHtml(value) {
   return String(value ?? '')

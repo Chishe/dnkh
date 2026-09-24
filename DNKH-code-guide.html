@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>คู่มือโครงสร้างโค้ด DNKH Production Dashboard</title>
+  <style>
+    :root {
+      --paper: #f4f4f2;
+      --surface: #ffffff;
+      --surface-soft: #e7e7e4;
+      --ink: #202124;
+      --muted: #65676b;
+      --line: #c8c8c4;
+      --line-strong: #8b8b87;
+      --brand: #e60012;
+      --brand-dark: #a8000d;
+      --code: #303235;
+      --code-ink: #f5f5f3;
+      --success: #18794e;
+      --warning: #9a6700;
+      --radius: 8px;
+      --measure: 74ch;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: "Segoe UI", "Noto Sans Thai", Tahoma, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+    a { color: var(--brand-dark); text-underline-offset: 3px; }
+    code, pre { font-family: Consolas, "Cascadia Code", monospace; }
+    code { font-size: .9em; }
+    :focus-visible { outline: 3px solid #1f6feb; outline-offset: 3px; }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      min-height: 58px;
+      padding: 10px clamp(18px, 4vw, 56px);
+      border-top: 4px solid var(--brand);
+      border-bottom: 1px solid var(--line);
+      background: rgba(244, 244, 242, .96);
+    }
+    .brand {
+      color: var(--brand);
+      font-size: 1.1rem;
+      font-style: italic;
+      font-weight: 900;
+      letter-spacing: .04em;
+    }
+    .topbar nav { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+    .topbar nav a {
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+    .topbar nav a:hover { color: var(--brand); }
+
+    main { width: min(1180px, calc(100% - 36px)); margin: 0 auto; }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(250px, .65fr);
+      gap: clamp(30px, 7vw, 92px);
+      padding: clamp(54px, 9vw, 110px) 0 56px;
+      border-bottom: 1px solid var(--line-strong);
+    }
+    .eyebrow, .kicker {
+      margin: 0 0 12px;
+      color: var(--brand);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.22; }
+    h1 { max-width: 820px; margin: 0 0 24px; font-size: clamp(2.4rem, 6vw, 5.6rem); letter-spacing: -.055em; }
+    h2 { margin: 0 0 22px; font-size: clamp(1.7rem, 3.5vw, 3rem); letter-spacing: -.035em; }
+    h3 { margin: 0 0 10px; font-size: 1.1rem; }
+    p { max-width: var(--measure); }
+    .lede { margin: 0; color: #44464a; font-size: clamp(1.05rem, 1.8vw, 1.3rem); }
+    .meta {
+      align-self: end;
+      padding: 20px 0 0 20px;
+      border-left: 4px solid var(--brand);
+    }
+    .meta dl { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; margin: 0; }
+    .meta dt { color: var(--muted); font-size: .78rem; font-weight: 700; text-transform: uppercase; }
+    .meta dd { margin: 0; font-weight: 650; }
+
+    .section { padding: clamp(48px, 8vw, 90px) 0; border-bottom: 1px solid var(--line); }
+    .section-heading { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 28px; margin-bottom: 32px; }
+    .section-number { color: var(--brand); font-size: .82rem; font-weight: 900; letter-spacing: .12em; }
+    .section-heading p { margin: 0; color: var(--muted); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+    }
+    .flow article { position: relative; min-height: 175px; padding: 22px; border-right: 1px solid var(--line); }
+    .flow article:last-child { border-right: 0; }
+    .flow article:not(:last-child)::after {
+      content: "→";
+      position: absolute;
+      z-index: 1;
+      top: 24px;
+      right: -14px;
+      display: grid;
+      width: 27px;
+      height: 27px;
+      place-items: center;
+      background: var(--surface);
+      color: var(--brand);
+      font-weight: 900;
+    }
+    .flow strong { display: block; margin-bottom: 10px; font-size: .96rem; }
+    .flow p { margin: 0; color: var(--muted); font-size: .86rem; }
+    .flow code { display: inline-block; margin-bottom: 8px; color: var(--brand-dark); font-weight: 700; }
+
+    .note {
+      margin-top: 24px;
+      padding: 18px 20px;
+      border-left: 4px solid var(--brand);
+      background: #fff5f5;
+    }
+    .note strong { color: var(--brand-dark); }
+
+    .file-map { width: 100%; border-collapse: collapse; background: var(--surface); }
+    .file-map th, .file-map td { padding: 15px 17px; border: 1px solid var(--line); text-align: left; vertical-align: top; }
+    .file-map th { background: #dadad6; font-size: .76rem; letter-spacing: .08em; text-transform: uppercase; }
+    .file-map td:first-child { width: 31%; font-family: Consolas, monospace; font-size: .88rem; font-weight: 700; }
+    .file-map td:last-child { color: #4d4f53; }
+
+    .code-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+    .code-card { min-width: 0; border-top: 4px solid var(--brand); background: var(--surface); }
+    .code-card .body { padding: 20px; }
+    .code-card .label { margin: 0 0 5px; color: var(--brand-dark); font-size: .72rem; font-weight: 900; letter-spacing: .09em; text-transform: uppercase; }
+    .code-card p { margin: 0 0 16px; color: var(--muted); font-size: .92rem; }
+    pre {
+      margin: 0;
+      padding: 18px;
+      overflow: auto;
+      background: var(--code);
+      color: var(--code-ink);
+      font-size: .8rem;
+      line-height: 1.55;
+      tab-size: 2;
+      white-space: pre;
+    }
+    .comment { color: #b9c0c8; }
+    .accent { color: #ff7b83; }
+    .value { color: #b4e197; }
+
+    .steps { counter-reset: item; display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .step { counter-increment: item; display: grid; grid-template-columns: 70px 1fr; gap: 20px; padding: 24px; background: var(--surface); }
+    .step::before { content: counter(item, decimal-leading-zero); color: var(--brand); font-size: 1.7rem; font-weight: 900; line-height: 1; }
+    .step p { margin: 6px 0 0; color: var(--muted); }
+
+    .task-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; border: 1px solid var(--line); background: var(--line); }
+    .task { padding: 22px; background: var(--surface); }
+    .task p { margin: 8px 0 15px; color: var(--muted); font-size: .9rem; }
+    .path { display: inline-block; padding: 4px 7px; background: var(--surface-soft); font-family: Consolas, monospace; font-size: .78rem; font-weight: 700; overflow-wrap: anywhere; }
+
+    .command-list { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .command { display: grid; grid-template-columns: minmax(160px, .7fr) 1fr; gap: 18px; padding: 16px 18px; border: 1px solid var(--line); background: var(--surface); }
+    .command code { color: var(--brand-dark); font-weight: 800; overflow-wrap: anywhere; }
+    .command span { color: var(--muted); font-size: .9rem; }
+
+    .status-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+    .status { padding: 22px; border: 1px solid var(--line); background: var(--surface); }
+    .status .tag { display: inline-block; margin-bottom: 12px; padding: 3px 8px; color: #fff; font-size: .7rem; font-weight: 900; letter-spacing: .06em; }
+    .status .tag.warn { background: var(--warning); }
+    .status .tag.ok { background: var(--success); }
+    .status p { margin: 7px 0 0; color: var(--muted); }
+
+    footer { display: flex; justify-content: space-between; gap: 30px; padding: 32px 0 48px; color: var(--muted); font-size: .82rem; }
+
+    @media (max-width: 880px) {
+      .topbar nav { display: none; }
+      .hero, .section-heading { grid-template-columns: 1fr; }
+      .meta { align-self: auto; }
+      .flow { grid-template-columns: 1fr; }
+      .flow article { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+      .flow article:last-child { border-bottom: 0; }
+      .flow article:not(:last-child)::after { top: auto; right: 22px; bottom: -14px; transform: rotate(90deg); }
+      .code-grid, .task-grid, .command-list, .status-list { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      main { width: min(100% - 24px, 1180px); }
+      .topbar { padding-inline: 12px; }
+      .topbar small { display: none; }
+      h1 { font-size: 2.45rem; }
+      .file-map { display: block; overflow-x: auto; }
+      .step { grid-template-columns: 42px 1fr; padding: 18px; }
+      .command { grid-template-columns: 1fr; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+    @media print {
+      @page { size: A4; margin: 15mm; }
+      body { background: #fff; font-size: 10pt; }
+      .topbar { position: static; padding: 0 0 10px; background: #fff; }
+      .topbar nav { display: none; }
+      main { width: 100%; }
+      .hero { padding: 24px 0 30px; }
+      .section { padding: 30px 0; break-inside: auto; }
+      .code-card, .task, .status, .step, pre, table { break-inside: avoid; }
+      .flow { grid-template-columns: repeat(5, 1fr); }
+      .flow article { min-height: 145px; padding: 12px; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">DENSO</div>
+    <nav aria-label="สารบัญ">
+      <a href="#overview">ภาพรวม</a>
+      <a href="#structure">โครงสร้าง</a>
+      <a href="#flow">การทำงาน</a>
+      <a href="#maintenance">การแก้ไข</a>
+      <a href="#operations">การใช้งาน</a>
+    </nav>
+    <small>DNKH · Code Guide</small>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">Technical manual · Version 2.0</p>
+        <h1 id="page-title">คู่มือทำความเข้าใจโค้ด<br>DNKH Production Dashboard</h1>
+        <p class="lede">เอกสารหน้าเดียวสำหรับผู้ดูแลระบบและนักพัฒนา อธิบายว่า Fastify รับคำขออย่างไร ดึงข้อมูลจาก MySQL ที่จุดไหน และต้องแก้ไฟล์ใดเมื่อต้องเพิ่มหน้า API หรือปรับหน้าตา Dashboard</p>
+      </div>
+      <aside class="meta" aria-label="ข้อมูลระบบ">
+        <dl>
+          <dt>Runtime</dt><dd>Node.js 20+ / Fastify 5</dd>
+          <dt>Port</dt><dd>8800</dd>
+          <dt>Process</dt><dd>PM2 · 1 instance</dd>
+          <dt>Database</dt><dd>MySQL · 2 connection pools</dd>
+          <dt>Updated</dt><dd>23 กันยายน 2026</dd>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="section" id="overview" aria-labelledby="overview-title">
+      <div class="section-heading">
+        <span class="section-number">01 / OVERVIEW</span>
+        <div>
+          <p class="kicker">ภาพรวมสถาปัตยกรรม</p>
+          <h2 id="overview-title">คำขอหนึ่งครั้งเดินทางผ่าน 5 ส่วน</h2>
+          <p>Fastify เป็นตัวกลางระหว่าง Browser กับฐานข้อมูล หน้าเดิมยังใช้ไฟล์ <code>.php</code> เป็นแม่แบบ HTML แต่ไม่มีการรัน PHP บนเซิร์ฟเวอร์อีกแล้ว</p>
+        </div>
+      </div>
+
+      <div class="flow" aria-label="ลำดับการทำงานของระบบ">
+        <article><code>1</code><strong>Browser</strong><p>ผู้ใช้เปิดหน้า ค้นหา หรือส่งฟอร์มผ่าน URL เดิม เช่น <code>/traceability/brazing_nb.php</code></p></article>
+        <article><code>2</code><strong>Fastify</strong><p><code>src/server.js</code> เปิดพอร์ต และ <code>src/app.js</code> ประกอบระบบทั้งหมด</p></article>
+        <article><code>3</code><strong>Route</strong><p><code>src/routes/</code> ตรวจ URL แล้วเลือกว่าจะส่งหน้า HTML หรือข้อมูล API</p></article>
+        <article><code>4</code><strong>Service</strong><p><code>src/services/</code> เตรียมคำสั่ง SQL และประมวลผลข้อมูลทางธุรกิจ</p></article>
+        <article><code>5</code><strong>MySQL</strong><p><code>src/db/pools.js</code> ใช้ connection pool ติดต่อฐานข้อมูล <code>packing_dnkh</code> และ <code>dnkh</code></p></article>
+      </div>
+
+      <div class="note"><strong>จุดสำคัญ:</strong> นามสกุล <code>.php</code> ถูกเก็บไว้เพื่อให้ลิงก์และ Bookmark เดิมยังใช้ได้ แต่โค้ดฝั่งเซิร์ฟเวอร์ทำงานด้วย Node.js/Fastify ทั้งหมด</div>
+    </section>
+
+    <section class="section" id="structure" aria-labelledby="structure-title">
+      <div class="section-heading">
+        <span class="section-number">02 / FILE MAP</span>
+        <div>
+          <p class="kicker">แผนที่ไฟล์</p>
+          <h2 id="structure-title">แต่ละโฟลเดอร์รับผิดชอบอะไร</h2>
+          <p>แยกส่วนรับคำขอ การประมวลผล ฐานข้อมูล และหน้าจอออกจากกัน เพื่อหาจุดแก้ไขได้เร็วและลดผลกระทบข้ามส่วน</p>
+        </div>
+      </div>
+
+      <table class="file-map">
+        <thead><tr><th>ไฟล์ / โฟลเดอร์</th><th>หน้าที่</th></tr></thead>
+        <tbody>
+          <tr><td>src/server.js</td><td>จุดเริ่มต้นของโปรแกรม สร้างแอปและเปิดรับคำขอตาม HOST/PORT</td></tr>
+          <tr><td>src/app.js</td><td>ตั้งค่า Fastify, form body, route, static files, timeout และตัวจัดการ error กลาง</td></tr>
+          <tr><td>src/routes/pages.js</td><td>ค้นหาไฟล์หน้าเดิมอัตโนมัติ รองรับทั้ง URL แบบมีและไม่มี <code>.php</code> แล้วส่ง HTML กลับ</td></tr>
+          <tr><td>src/routes/api.js</td><td>รวม API สำหรับกราฟ เครื่องจักร Helium Leak, Lane และ LL Patrol</td></tr>
+          <tr><td>src/services/dashboard.js</td><td>SQL และกติกาของหน้าค้นหา Traceability รวมถึงหน้ารายงานตามวันที่</td></tr>
+          <tr><td>src/services/machine.js</td><td>SQL และกติกาของ Machine Condition, Alarm, Helium และการบันทึก Patrol</td></tr>
+          <tr><td>src/db/pools.js</td><td>สร้าง MySQL connection pool สองชุดและนำกลับมาใช้ซ้ำ ลดเวลาต่อฐานข้อมูลใหม่ทุกคำขอ</td></tr>
+          <tr><td>src/lib/html.js</td><td>อ่านแม่แบบหน้าเดิม รวม partial, ใส่ข้อมูลลง HTML, escape ค่า และเติมเวอร์ชันให้ CSS</td></tr>
+          <tr><td>traceability/ · trendcontrol/</td><td>แม่แบบหน้าจอและ JavaScript ฝั่ง Browser โครง UI เดิมยังอยู่ที่นี่</td></tr>
+          <tr><td>partial/ · style.css</td><td>Header, Sidebar และชุดสี/รูปแบบที่ใช้ร่วมกันทุกหน้า</td></tr>
+          <tr><td>ecosystem.config.js</td><td>กำหนด PM2 ให้รันแอปชื่อ <code>dnkh-dashboard</code> เพียง 1 instance บนพอร์ต 8800</td></tr>
+          <tr><td>test/</td><td>ทดสอบ route, HTML renderer, ความปลอดภัยของ static files และการตั้งค่า PM2</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="flow" aria-labelledby="flow-title">
+      <div class="section-heading">
+        <span class="section-number">03 / CODE FLOW</span>
+        <div>
+          <p class="kicker">อ่านโค้ดตามลำดับ</p>
+          <h2 id="flow-title">4 จุดหลักที่ทำให้ระบบทำงาน</h2>
+          <p>ตัวอย่างด้านล่างย่อจากโค้ดจริง เน้นความสัมพันธ์ระหว่างไฟล์มากกว่ารายละเอียดทุกบรรทัด</p>
+        </div>
+      </div>
+
+      <div class="code-grid">
+        <article class="code-card">
+          <div class="body"><p class="label">A · Start server</p><h3>เปิด Fastify ตามค่าที่กำหนด</h3><p><code>src/server.js</code> สร้างแอปเพียงครั้งเดียวและเปิดพอร์ตจาก config</p></div>
+          <pre><span class="comment">// src/server.js</span>
+const app = buildApp();
+await app.listen({
+  host: config.host,
+  port: config.port <span class="comment">// 8800</span>
+});</pre>
+        </article>
+
+        <article class="code-card">
+          <div class="body"><p class="label">B · Register routes</p><h3>ประกอบหน้า API และไฟล์ static</h3><p><code>src/app.js</code> เป็นศูนย์กลางตั้งค่าระบบ และป้องกันไม่ให้ source code ถูกเปิดเป็น static file</p></div>
+          <pre><span class="comment">// src/app.js</span>
+app.register(formbody);
+app.register(require(<span class="value">'./routes/api'</span>));
+app.register(require(<span class="value">'./routes/pages'</span>));
+app.register(fastifyStatic, {
+  maxAge: <span class="value">'1h'</span>,
+  allowedPath: safePublicFile
+});</pre>
+        </article>
+
+        <article class="code-card">
+          <div class="body"><p class="label">C · Query data</p><h3>ใช้ parameter แทนการต่อ SQL</h3><p>Service รับค่าจาก route แล้วส่ง SQL พร้อม parameter เข้า pool ลดความเสี่ยง SQL injection</p></div>
+          <pre><span class="comment">// src/services/dashboard.js</span>
+const [rows] = await packing.execute(
+  <span class="value">'SELECT * FROM `nb_1` WHERE `nb_pd` = ?'</span>,
+  [selectedDate]
+);
+return rows;</pre>
+        </article>
+
+        <article class="code-card">
+          <div class="body"><p class="label">D · Render legacy UI</p><h3>ใส่ข้อมูลลงแม่แบบอย่างปลอดภัย</h3><p><code>escapeHtml()</code> แปลงอักขระพิเศษก่อนนำค่าจากผู้ใช้หรือฐานข้อมูลไปแสดงใน HTML</p></div>
+          <pre><span class="comment">// src/lib/html.js</span>
+function escapeHtml(value) {
+  return String(value ?? <span class="value">''</span>)
+    .replaceAll(<span class="value">'&amp;'</span>, <span class="value">'&amp;amp;'</span>)
+    .replaceAll(<span class="value">'&lt;'</span>, <span class="value">'&amp;lt;'</span>)
+    .replaceAll(<span class="value">'&gt;'</span>, <span class="value">'&amp;gt;'</span>);
+}</pre>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="request-title">
+      <div class="section-heading">
+        <span class="section-number">04 / REQUEST</span>
+        <div>
+          <p class="kicker">ตัวอย่างการทำงานจริง</p>
+          <h2 id="request-title">เมื่อเปิดหน้า NB Brazing</h2>
+          <p>ตัวอย่างนี้แสดงว่าชื่อไฟล์เดิมเชื่อมกับ route และฐานข้อมูลใหม่อย่างไร</p>
+        </div>
+      </div>
+      <div class="steps">
+        <article class="step"><div><h3>Browser ส่ง GET</h3><p>เปิด <code>/traceability/brazing_nb.php?selected_date=2026-09-23</code></p></div></article>
+        <article class="step"><div><h3>Page route รับคำขอ</h3><p><code>pages.js</code> จับ route จากไฟล์ <code>traceability/brazing_nb.php</code> และส่งวันที่ไปยัง service</p></div></article>
+        <article class="step"><div><h3>Service อ่านฐานข้อมูล</h3><p><code>dashboard.js</code> เลือกตาราง <code>nb_1</code> และคอลัมน์ <code>nb_pd</code> จากแผนที่ <code>datedPages</code></p></div></article>
+        <article class="step"><div><h3>Renderer สร้าง HTML</h3><p><code>html.js</code> อ่านแม่แบบ ใส่แถวข้อมูล และเติม <code>?v=...</code> หลัง <code>style.css</code> เพื่อป้องกันแคชเก่า</p></div></article>
+        <article class="step"><div><h3>Fastify ส่งผลลัพธ์</h3><p>Browser ได้ HTML ที่หน้าตาเหมือนเดิม โดยไม่ต้องติดตั้งหรือประมวลผล PHP</p></div></article>
+      </div>
+    </section>
+
+    <section class="section" id="maintenance" aria-labelledby="maintenance-title">
+      <div class="section-heading">
+        <span class="section-number">05 / MAINTENANCE</span>
+        <div>
+          <p class="kicker">แก้ตรงไหนเมื่อ...</p>
+          <h2 id="maintenance-title">คู่มือเลือกไฟล์ให้ถูกจุด</h2>
+          <p>เริ่มจากชนิดของงาน ไม่ควรใส่ SQL ใน route หรือใส่กติกาธุรกิจไว้ใน HTML เพราะจะทำให้ทดสอบและบำรุงรักษายาก</p>
+        </div>
+      </div>
+      <div class="task-grid">
+        <article class="task"><h3>เปลี่ยนสีหรือระยะห่าง</h3><p>แก้ตัวแปรใน <code>:root</code> และ selector ส่วนกลาง จากนั้นเพิ่มค่า <code>UI_VERSION</code> เพื่อให้เครื่องลูกข่ายโหลด CSS ใหม่</p><span class="path">style.css · src/lib/html.js</span></article>
+        <article class="task"><h3>เพิ่มหน้าแสดงผล</h3><p>เพิ่มแม่แบบ <code>.php</code> ในโฟลเดอร์ UI หากเป็นหน้าตามวันที่ให้เพิ่ม mapping ตารางและคอลัมน์ใน <code>datedPages</code></p><span class="path">traceability/ · services/dashboard.js</span></article>
+        <article class="task"><h3>เพิ่ม API</h3><p>ประกาศ method/URL ใน route แล้วเรียกฟังก์ชัน service ไม่เขียน SQL ยาวไว้ใน route โดยตรง</p><span class="path">src/routes/api.js · src/services/</span></article>
+        <article class="task"><h3>เปลี่ยนการเชื่อมต่อ DB</h3><p>ตั้งผ่าน Environment Variable ไม่ฝังรหัสผ่านใน source code และอ้างชื่อ variable ตามไฟล์ตัวอย่าง</p><span class="path">.env.example · src/config.js</span></article>
+        <article class="task"><h3>เพิ่มรายการ Sidebar</h3><p>เพิ่มลิงก์ใน partial ที่ใช้ร่วมกัน และตรวจสอบว่า href ตรงกับชื่อหน้าจริง รวมถึงตัวพิมพ์และ underscore</p><span class="path">partial/navbar.html</span></article>
+        <article class="task"><h3>เปลี่ยนการรัน Production</h3><p>แก้ชื่อแอป พอร์ต จำนวน instance หรือ memory limit ที่ ecosystem โดยระบบนี้กำหนด <strong>instances: 1</strong></p><span class="path">ecosystem.config.js</span></article>
+      </div>
+    </section>
+
+    <section class="section" id="operations" aria-labelledby="operations-title">
+      <div class="section-heading">
+        <span class="section-number">06 / OPERATIONS</span>
+        <div>
+          <p class="kicker">รันและตรวจสอบระบบ</p>
+          <h2 id="operations-title">คำสั่งที่ใช้ประจำ</h2>
+          <p>รันคำสั่งจากโฟลเดอร์ <code>Dashboard</code> หรือใช้ไฟล์ BAT สำหรับ Startup ซึ่งจะเปลี่ยน path มายังโฟลเดอร์ของตัวเองให้อัตโนมัติ</p>
+        </div>
+      </div>
+      <div class="command-list">
+        <div class="command"><code>start-dashboard-pm2.bat</code><span>ไฟล์สำหรับวาง Shortcut ใน Windows Startup</span></div>
+        <div class="command"><code>npm run pm2:status</code><span>ดูว่าแอปออนไลน์และมีเพียง 1 process</span></div>
+        <div class="command"><code>npm run pm2:restart</code><span>รีสตาร์ตหลังแก้โค้ดหรือ Environment</span></div>
+        <div class="command"><code>npm run pm2:logs</code><span>ดู log เมื่อหน้าเว็บหรือฐานข้อมูลมีปัญหา</span></div>
+        <div class="command"><code>npm run check</code><span>ตรวจ syntax ของไฟล์เริ่มต้น</span></div>
+        <div class="command"><code>npm test</code><span>รัน automated tests ทั้งหมดก่อนนำขึ้นใช้งาน</span></div>
+      </div>
+      <div class="note"><strong>Health check:</strong> เปิด <code>http://localhost:8800/api/health</code> หากระบบปกติจะได้ JSON ที่มี <code>status: "ok"</code> และ <code>runtime: "fastify"</code></div>
+    </section>
+
+    <section class="section" aria-labelledby="troubleshoot-title">
+      <div class="section-heading">
+        <span class="section-number">07 / RECOVERY</span>
+        <div>
+          <p class="kicker">แก้ปัญหาเบื้องต้น</p>
+          <h2 id="troubleshoot-title">อาการที่พบบ่อยและจุดตรวจ</h2>
+          <p>แยกก่อนว่าปัญหาเกิดที่ URL, Fastify, PM2 หรือ MySQL จะช่วยลดเวลาหาสาเหตุ</p>
+        </div>
+      </div>
+      <div class="status-list">
+        <article class="status"><span class="tag warn">404 NOT FOUND</span><h3>ชื่อ route ไม่ตรงกับไฟล์จริง</h3><p>ตรวจชื่อไฟล์ใน <code>traceability/</code> หรือ <code>trendcontrol/</code> เช่นหน้าที่ถูกต้องคือ <code>brazing_nb.php</code> ไม่ใช่ <code>nb_brazing.php</code></p></article>
+        <article class="status"><span class="tag warn">DATABASE ERROR</span><h3>หน้าเปิดได้แต่ไม่มีข้อมูล</h3><p>ตรวจว่า MySQL ทำงานอยู่ ค่า Host/Port ถูกต้อง และฐานข้อมูล <code>packing_dnkh</code> กับ <code>dnkh</code> เข้าถึงได้</p></article>
+        <article class="status"><span class="tag warn">2 PROCESSES</span><h3>PM2 รันมากกว่าหนึ่ง instance</h3><p>ตรวจ <code>ecosystem.config.js</code> ต้องเป็น <code>exec_mode: "fork"</code> และ <code>instances: 1</code> จากนั้นใช้ <code>npm run pm2:restart</code></p></article>
+        <article class="status"><span class="tag ok">SAFE CHANGE</span><h3>ก่อนนำเวอร์ชันใหม่ขึ้นใช้งาน</h3><p>รัน <code>npm run check</code> และ <code>npm test</code> ตรวจหน้าใช้งานจริง แล้วจึง restart PM2 เพื่อลดผลกระทบกับผู้ใช้</p></article>
+      </div>
+    </section>
+
+    <footer>
+      <span>DNKH Production Dashboard · Fastify migration guide</span>
+      <span>ไฟล์นี้ทำงานแบบ standalone และพร้อมพิมพ์เป็น PDF</span>
+    </footer>
+  </main>
+</body>
+</html>

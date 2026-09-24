@@ -47,3 +47,29 @@ Database settings are read from environment variables documented in `.env.exampl
 - Fastify keep-alive is enabled for dashboard polling.
 
 Health check: `GET /api/health`.
+
+## Core packing API (Node-RED replacement)
+
+The former `data_send` and `data_confirm` flow is available directly from Fastify. The API returns the machine decision immediately; `resetAfterMs` tells the client when it may clear the displayed result without holding the HTTP request open.
+
+Check a kanban:
+
+```http
+POST /api/core-packing/check
+Content-Type: application/json
+
+{"kanban":"KN233310-5080","mc":1}
+```
+
+Confirm a water-leak or data-gap result:
+
+```http
+POST /api/core-packing/confirm
+Content-Type: application/json
+
+{"kanban":"KN233310-5080","mc":1,"nb_date":"2026-09-23","type":"dg"}
+```
+
+Compatibility aliases `POST /data_send` and `POST /data_confirm` accept the same bodies. Point the scanner/client at Fastify port 8800, verify both machines, and only then disable the corresponding Node-RED input to avoid processing the same scan twice.
+
+The confirm endpoint reads PostgreSQL settings from the `CORE_TEST_DB_*` environment variables in `.env.example`. Never copy a database password into source code or a Node-RED export.

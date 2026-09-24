@@ -45,11 +45,10 @@
                 <br>
                 <hr style="background-color: white; height: 2px;">
                 <div id="message">waiting for scan..</div>
-                <!-- <div class="head_page">TIME COUNT </div>
-                <div class="loading-container">
-                    <div class="loading-bar" id="loadingBar"></div>
-                    <div class="countdown" id="countdown">30:00</div>
-                </div> -->
+                <div id="ins_calendar" style="display:flex; justify-content: center; align-items: center; visibility: hidden; font-size: 28px; padding-top: 25px;">
+                    <input type="date" id="select_date" style="margin-right: 10px;">
+                    <button id="submit">Select</button>
+                </div>
             </div>
         </div>
     </div>
@@ -188,223 +187,159 @@
     }
 </style>
 <script>
-    let socket = null;
-    let reconnectTimer = null;
-    let reconnectCount = 0;
+    var select_date = document.getElementById("select_date");
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = today.getMonth() + 1;
+    var dd = today.getDate();
+    if (mm < 10) {
+        mm = '0' + mm;
+    }
+    if (dd < 10) {
+        dd = '0' + dd;
+    }
 
-    const WS_URL = "ws://192.168.2.101:1880/ws/core_packing2";
+    var currentDate = yyyy + '-' + mm + '-' + dd;
+    select_date.value = currentDate;
 
-    function connectWebSocket() {
+    const socketCorePacking = new WebSocket("ws://192.168.2.101:1880/ws/core_packing2");
+    socketCorePacking.onopen = function(event) {
+        console.log('WebSocket is connected.');
+    };
 
-        // ป้องกัน connection ซ้ำ
-        if (
-            socket &&
-            (
-                socket.readyState === WebSocket.OPEN ||
-                socket.readyState === WebSocket.CONNECTING
-            )
-        ) {
-            console.log("⚠️ WebSocket already connected/connecting");
+    socketCorePacking.onmessage = function(event) {
+
+        const res = JSON.parse(event.data);
+
+        if (!res || !res.data) {
+            console.error("Invalid WebSocket response:", res);
+
+            const messageElement = document.getElementById("message");
+            messageElement.textContent = "System Data Error";
+            messageElement.style.backgroundColor = "red";
             return;
         }
 
-        console.log("====================================");
-        console.log("🔄 Connecting WebSocket...");
-        console.log("📡 URL:", WS_URL);
-        console.log("🕐 Time:", new Date().toLocaleString());
-        console.log("====================================");
+        const kanban = res.data.kanban;
+        const judgeText = res.data.judge;
+        const value = res.data.value;
+        const mc = res.data.mc;
+        console.log(res);
 
-        socket = new WebSocket(WS_URL);
+        document.getElementById('part-no').value = kanban;
+        document.getElementById('judge').value = judgeText;
 
+        const judgeInput = document.getElementById('judge');
+        var messageElement = document.getElementById('message');
+        judgeInput.value = judgeText;
 
-        // =========================
-        // CONNECT SUCCESS
-        // =========================
-        socket.onopen = function (event) {
-
-            console.log("✅ WebSocket CONNECTED");
-            console.log("📡 URL:", WS_URL);
-            console.log("🕐 Time:", new Date().toLocaleString());
-            console.log("ReadyState:", socket.readyState);
-
-            reconnectCount = 0;
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-                reconnectTimer = null;
+        if (value === 'OK') {
+            judgeInput.classList.remove('ng');
+            judgeInput.classList.add('ok');
+            messageElement.textContent = "Ready to Package";
+            messageElement.style.backgroundColor = 'green';
+            messageElement.className = 'green';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'bypass') {
+            judgeInput.classList.remove('ng');
+            judgeInput.classList.add('ok');
+            messageElement.textContent = "Ready to Package";
+            messageElement.style.backgroundColor = 'green';
+            messageElement.className = 'green';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'spare') {
+            judgeInput.classList.remove('ng');
+            judgeInput.classList.add('ok');
+            messageElement.textContent = "Assy Spare Part";
+            messageElement.style.backgroundColor = 'green';
+            messageElement.className = 'green';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'NG') {
+            judgeInput.classList.remove('ok');
+            judgeInput.classList.add('ng');
+            messageElement.textContent = "Defect Over";
+            messageElement.style.backgroundColor = 'red';
+            messageElement.className = 'red';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'out-T') {
+            judgeInput.classList.remove('ok');
+            judgeInput.classList.add('ng');
+            messageElement.textContent = "No Helium";
+            messageElement.style.backgroundColor = 'red';
+            messageElement.className = 'red';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'out-W') {
+            judgeInput.classList.remove('ok');
+            judgeInput.classList.add('ng');
+            messageElement.textContent = "No Data Water Test";
+            messageElement.style.backgroundColor = 'red';
+            messageElement.className = 'red';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'out-D') {
+            judgeInput.classList.remove('ok');
+            judgeInput.classList.add('ng');
+            messageElement.textContent = "No Record Found";
+            messageElement.style.backgroundColor = 'red';
+            messageElement.className = 'red';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'reset') {
+            judgeInput.classList.remove('ng');
+            judgeInput.classList.remove('ok');
+            messageElement.textContent = "Waiting For Scan..";
+            messageElement.style.backgroundColor = 'yellow';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'load') {
+            judgeInput.classList.remove('ng');
+            judgeInput.classList.remove('ok');
+            messageElement.textContent = "Searching ..";
+            messageElement.style.backgroundColor = 'yellow';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        } else if (value === 'water' || value === 'dg') {
+            if (value === 'water') {
+                messageElement.textContent = "Select NB Date";
+            } else {
+                messageElement.textContent = "Select Core Date";
             }
-        };
+            messageElement.style.backgroundColor = 'yellow';
+            document.getElementById("ins_calendar").style.visibility = 'visible';
+            document.getElementById("submit").addEventListener("click", function() {
+                var dataToSend = {
+                    kanban: kanban,
+                    nb_date: document.getElementById("select_date").value,
+                    type: value,
+                    mc: mc,
+                };
 
+                fetch('http://192.168.2.101:1880/data_confirm2', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(dataToSend) // ส่งข้อมูลในรูปแบบ JSON
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Success:', data); // รับข้อมูลที่ Node-RED ส่งกลับ
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            });
+        } else {
+            judgeInput.classList.remove('ok');
+            judgeInput.classList.add('ng');
+            messageElement.textContent = "No Record Found";
+            messageElement.style.backgroundColor = 'red';
+            messageElement.className = 'red';
+            document.getElementById("ins_calendar").style.visibility = 'hidden';
+        }
+    };
 
-        // =========================
-        // RECEIVE MESSAGE
-        // =========================
-        socket.onmessage = function (event) {
+    socketCorePacking.onerror = function(error) {
+        console.error('WebSocket Error: ' + error);
+    };
 
-            console.log("📥 WebSocket MESSAGE received");
-            console.log("RAW DATA:", event.data);
-
-            try {
-
-                const res = JSON.parse(event.data);
-
-                console.log("JSON DATA:", res);
-
-                const kanban = res.data.kanban;
-                const ratio = res.data.ratio;
-                const judgeText = res.data.judge;
-                const value = res.data.value;
-
-                console.log("Kanban :", kanban);
-                console.log("Ratio  :", ratio);
-                console.log("Judge  :", judgeText);
-                console.log("Value  :", value);
-
-                document.getElementById('part-no').value = kanban;
-
-                // document.getElementById('ratio').value = ratio;
-
-                const judgeInput =
-                    document.getElementById('judge');
-
-                const messageElement =
-                    document.getElementById('message');
-
-                judgeInput.value = judgeText;
-
-
-                if (value === 'OK') {
-
-                    judgeInput.classList.remove('ng');
-                    judgeInput.classList.add('ok');
-
-                    messageElement.textContent =
-                        "READY TO PACK";
-
-                    messageElement.style.backgroundColor =
-                        'green';
-
-                    messageElement.className =
-                        'green';
-
-
-                } else if (value === 'bypass') {
-
-                    judgeInput.classList.remove('ng');
-                    judgeInput.classList.add('ok');
-
-                    messageElement.textContent =
-                        "ASSY SPARE PART";
-
-                    messageElement.style.backgroundColor =
-                        'green';
-
-                    messageElement.className =
-                        'green';
-
-
-                } else if (value === 'wrong') {
-
-                    judgeInput.classList.remove('ok');
-                    judgeInput.classList.add('ng');
-
-                    messageElement.textContent =
-                        "UNKNOWN";
-
-                    messageElement.style.backgroundColor =
-                        'red';
-
-                    messageElement.className =
-                        'red';
-
-
-                } else if (value === 'reset') {
-
-                    judgeInput.classList.remove('ng');
-                    judgeInput.classList.remove('ok');
-
-                    messageElement.textContent =
-                        "Waiting for scan ...";
-
-                    messageElement.style.backgroundColor =
-                        'yellow';
-
-
-                } else {
-
-                    judgeInput.classList.remove('ok');
-                    judgeInput.classList.add('ng');
-
-                    messageElement.textContent =
-                        "NOT READY TO PACK";
-
-                    messageElement.style.backgroundColor =
-                        'red';
-
-                    messageElement.className =
-                        'red';
-                }
-
-            } catch (error) {
-
-                console.error(
-                    "❌ Invalid WebSocket message:",
-                    error
-                );
-            }
-        };
-
-
-        // =========================
-        // ERROR
-        // =========================
-        socket.onerror = function (error) {
-
-            console.error("❌ WebSocket ERROR");
-            console.error("URL:", WS_URL);
-            console.error(error);
-        };
-
-
-        // =========================
-        // CONNECTION CLOSED
-        // =========================
-        socket.onclose = function (event) {
-
-            console.warn("🔴 WebSocket DISCONNECTED");
-            console.warn("Code   :", event.code);
-            console.warn("Reason :", event.reason || "No reason");
-            console.warn("Clean  :", event.wasClean);
-            console.warn("Time   :", new Date().toLocaleString());
-
-            socket = null;
-
-            reconnectCount++;
-
-            console.log(
-                `🔄 Reconnect attempt #${reconnectCount} in 3 seconds...`
-            );
-
-            if (reconnectTimer) {
-                clearTimeout(reconnectTimer);
-            }
-
-            reconnectTimer = setTimeout(() => {
-
-                console.log(
-                    `🔄 Reconnecting #${reconnectCount}...`
-                );
-
-                connectWebSocket();
-
-            }, 3000);
-        };
-    }
-
-
-    // =========================
-    // FIRST CONNECTION
-    // =========================
-    connectWebSocket();
-
+    socketCorePacking.onclose = function(event) {
+        console.log('WebSocket is closed now.');
+    };
 </script>

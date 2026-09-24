@@ -13,6 +13,20 @@ test('health endpoint identifies the Fastify runtime', async () => {
   assert.equal(response.json().runtime, 'fastify');
 });
 
+test('core packing API replaces immediate Node-RED branches', async () => {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/core-packing/check',
+    payload: { kanban: 'KN233310-5080', mc: 1 }
+  });
+  assert.equal(response.statusCode, 200);
+  assert.deepEqual(response.json().data, {
+    kanban: 'KN233310-5080', judge: '', value: 'dg', mc: 1
+  });
+  assert.equal(app.hasRoute({ method: 'POST', url: '/data_send' }), true);
+  assert.equal(app.hasRoute({ method: 'POST', url: '/data_confirm' }), true);
+});
+
 test('root and legacy index keep existing entry links working', async () => {
   const root = await app.inject({ method: 'GET', url: '/' });
   const legacy = await app.inject({ method: 'GET', url: '/index.php' });
@@ -42,13 +56,13 @@ test('new helium adjustment page and its Fastify endpoints are registered', asyn
   const invalidSearch = await app.inject({
     method: 'POST',
     url: '/server/helium_adjust.php',
-    payload: { date: 'not-a-date' },
+    payload: 'date=not-a-date',
     headers: { 'content-type': 'application/x-www-form-urlencoded' }
   });
   const invalidUpdate = await app.inject({
     method: 'POST',
     url: '/server/helium_update.php',
-    payload: {},
+    payload: '',
     headers: { 'content-type': 'application/x-www-form-urlencoded' }
   });
   assert.equal(invalidSearch.statusCode, 400);

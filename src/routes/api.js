@@ -5,6 +5,9 @@ const {
   latestConditions, chartData, alarmRows, heliumPercentage, heliumAdjust, passHeliumLeak,
   heliumLaneStock, updateLane, insertPatrol
 } = require('../services/machine');
+const {
+  CorePackingInputError, checkCorePacking, confirmCorePacking
+} = require('../services/core-packing');
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -14,6 +17,28 @@ function trendEndpointPaths(file) {
 
 module.exports = async function apiRoutes(app) {
   app.get('/api/health', async () => ({ status: 'ok', runtime: 'fastify', timestamp: new Date().toISOString() }));
+
+  const sendCorePacking = async (request, reply) => {
+    try {
+      return await checkCorePacking(request.body || {});
+    } catch (error) {
+      if (error instanceof CorePackingInputError) return reply.code(error.statusCode).send({ error: error.message });
+      throw error;
+    }
+  };
+  const confirmCorePackingResult = async (request, reply) => {
+    try {
+      return await confirmCorePacking(request.body || {});
+    } catch (error) {
+      if (error instanceof CorePackingInputError) return reply.code(error.statusCode).send({ error: error.message });
+      throw error;
+    }
+  };
+
+  app.post('/api/core-packing/check', sendCorePacking);
+  app.post('/api/core-packing/confirm', confirmCorePackingResult);
+  app.post('/data_send', sendCorePacking);
+  app.post('/data_confirm', confirmCorePackingResult);
 
   for (const url of trendEndpointPaths('mc_condition_server.php')) app.get(url, latestConditions);
   for (const url of trendEndpointPaths('mc_chart_data.php')) app.get(url, chartData);

@@ -56,115 +56,99 @@
 
 </html>
 <script>
-    const dateInput = document.getElementById('selected_date');
-    const searchForm = document.getElementById('adjust-search-form');
-    const searchButton = document.getElementById('search');
-    const statusMessage = document.getElementById('adjust-status');
-    const tableBody = document.querySelector('#pokayoke tbody');
-
-    dateInput.value = new Intl.DateTimeFormat('en-CA', {
-        timeZone: 'Asia/Bangkok'
-    }).format(new Date());
-
-    function setStatus(message, tone = '') {
-        statusMessage.textContent = message;
-        statusMessage.dataset.tone = tone;
+    var select_date = document.getElementById("selected_date");
+    var today = new Date();
+    var yyyy = today.getFullYear();
+    var mm = today.getMonth() + 1;
+    var dd = today.getDate();
+    if (mm < 10) {
+        mm = '0' + mm;
+    }
+    if (dd < 10) {
+        dd = '0' + dd;
     }
 
-    function appendCell(row, value) {
-        const cell = document.createElement('td');
-        cell.textContent = value ?? '';
-        row.appendChild(cell);
-    }
+    var currentDate = yyyy + '-' + mm + '-' + dd;
+    select_date.value = currentDate;
 
-    function showEmpty(message) {
-        tableBody.replaceChildren();
-        const row = document.createElement('tr');
-        row.className = 'adjust-empty-row';
-        const cell = document.createElement('td');
-        cell.colSpan = 6;
-        cell.textContent = message;
-        row.appendChild(cell);
-        tableBody.appendChild(row);
-    }
+    select_date.addEventListener("change", function() {
+        // console.log(select_date.value);
+    });
+
+    document.getElementById("search").addEventListener("click", function() {
+        var selectedDate = select_date.value;
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "../server/helium_adjust.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+        xhr.onload = function() {
+            if (xhr.status == 200) {
+                var response = JSON.parse(xhr.responseText);
+                displayData(response, selectedDate); 
+            } else {
+                alert("Error fetching data.");
+            }
+        };
+
+        xhr.send("date=" + selectedDate);
+    });
 
     function displayData(data, selectedDate) {
-        tableBody.replaceChildren();
-        if (!Array.isArray(data) || data.length === 0) {
-            showEmpty('No pending records found for this date.');
-            setStatus('Search complete — no pending records.', 'success');
-            return;
-        }
+        var tableBody = document.querySelector("#pokayoke tbody");
+        tableBody.innerHTML = "";
 
-        data.forEach((record) => {
-            const row = document.createElement('tr');
-            appendCell(row, record.core_code);
-            appendCell(row, record.core_part_no);
-            appendCell(row, record.assy_code);
-            appendCell(row, record.assy_line);
-            appendCell(row, record.nb_pd);
-
-            const actionCell = document.createElement('td');
-            const passButton = document.createElement('button');
-            passButton.type = 'button';
-            passButton.className = 'pass-btn';
-            passButton.textContent = 'Mark as pass';
-            passButton.addEventListener('click', () => updateDatabase(record.core_code, selectedDate, passButton));
-            actionCell.appendChild(passButton);
-            row.appendChild(actionCell);
-            tableBody.appendChild(row);
+        data.forEach(function(row) {
+            var tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${row.core_code}</td>
+                <td>${row.core_part_no}</td>
+                <td>${row.assy_code}</td>
+                <td>${row.assy_line}</td>
+                <td>${row.nb_pd}</td>
+                <td>
+                    <button class="pass-btn" data-core-code="${row.core_code}">pass</button>
+                </td>
+            `;
+            tableBody.appendChild(tr);
         });
 
-        setStatus(`${data.length} pending record${data.length === 1 ? '' : 's'} found.`, 'success');
-    }
+        document.querySelectorAll(".pass-btn").forEach(button => {
+            button.addEventListener("click", function() {
+                var coreCode = this.getAttribute("data-core-code");
 
-    async function loadRecords() {
-        const selectedDate = dateInput.value;
-        searchButton.disabled = true;
-        searchButton.textContent = 'Searching…';
-        setStatus('Loading pending records…');
-
-        try {
-            const response = await fetch('../server/helium_adjust.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ date: selectedDate })
+                updateDatabase(coreCode, selectedDate);
             });
-            if (!response.ok) throw new Error('Unable to fetch pending records.');
-            displayData(await response.json(), selectedDate);
-        } catch (error) {
-            showEmpty('Records could not be loaded. Please try again.');
-            setStatus(error.message, 'error');
-        } finally {
-            searchButton.disabled = false;
-            searchButton.textContent = 'Search pending records';
-        }
+        });
     }
 
-    async function updateDatabase(coreCode, selectedDate, button) {
-        if (!window.confirm(`Mark core ${coreCode} as pass?`)) return;
-        button.disabled = true;
-        button.textContent = 'Updating…';
-        setStatus(`Updating core ${coreCode}…`);
+    function updateDatabase(coreCode, selectedDate) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "../server/helium_update.php", true);
+        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
-        try {
-            const response = await fetch('../server/helium_update.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ core_code: coreCode, date: selectedDate })
-            });
-            if (!response.ok) throw new Error('The record could not be updated. It may already be processed.');
-            setStatus(`Core ${coreCode} was marked as pass.`, 'success');
-            await loadRecords();
-        } catch (error) {
-            button.disabled = false;
-            button.textContent = 'Mark as pass';
-            setStatus(error.message, 'error');
-        }
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                alert("Status updated successfully.");
+                var xhrRefresh = new XMLHttpRequest();
+                xhrRefresh.open("POST", "../server/helium_adjust.php", true);
+                xhrRefresh.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+
+                xhrRefresh.onload = function() {
+                    if (xhrRefresh.status == 200) {
+                        var response = JSON.parse(xhrRefresh.responseText);
+                        displayData(response, selectedDate); 
+                    } else {
+                        alert("Error fetching updated data.");
+                    }
+                };
+
+                xhrRefresh.send("date=" + selectedDate);
+            } else {
+                alert("Error updating status.");
+            }
+        };
+
+        xhr.send("core_code=" + coreCode);
     }
-
-    searchForm.addEventListener('submit', (event) => {
-        event.preventDefault();
-        loadRecords();
-    });
 </script>

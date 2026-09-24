@@ -4,7 +4,7 @@ const Fastify = require('fastify');
 const fastifyStatic = require('@fastify/static');
 const formbody = require('@fastify/formbody');
 const config = require('./config');
-const { packing, machine } = require('./db/pools');
+const { packing, machine, coreTest } = require('./db/pools');
 
 function buildApp(options = {}) {
   const app = Fastify({
@@ -41,7 +41,7 @@ function buildApp(options = {}) {
     reply.code(statusCode).send({ error: statusCode === 500 ? 'Internal server error' : error.message });
   });
 
-  app.addHook('onClose', async () => Promise.all([packing.end(), machine.end()]));
+  app.addHook('onClose', async () => Promise.all([packing.end(), machine.end(), coreTest.end()]));
   return app;
 }
 

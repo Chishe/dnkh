@@ -20,5 +20,15 @@ module.exports = Object.freeze({
     user: process.env.MACHINE_DB_USER || 'root',
     password: process.env.MACHINE_DB_PASSWORD || '',
     database: process.env.MACHINE_DB_NAME || 'dnkh'
+  },
+  postgresDb: {
+    host: process.env.CORE_TEST_DB_HOST || '192.168.2.104',
+    port: Number(process.env.CORE_TEST_DB_PORT || 5432),
+    user: process.env.CORE_TEST_DB_USER || 'postgres',
+    password: process.env.CORE_TEST_DB_PASSWORD || '',
+    database: process.env.CORE_TEST_DB_NAME || 'postgres',
+    max: Number(process.env.CORE_TEST_DB_POOL_SIZE || 10),
+    idleTimeoutMillis: 30_000,
+    connectionTimeoutMillis: 2_000
   }
 });

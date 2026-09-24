@@ -1,6 +1,7 @@
 'use strict';
 
 const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const config = require('../config');
 
 function createPool(database) {
@@ -21,5 +22,6 @@ function createPool(database) {
 
 module.exports = {
   packing: createPool(config.packingDb),
-  machine: createPool(config.machineDb)
+  machine: createPool(config.machineDb),
+  coreTest: new Pool(config.postgresDb)
 };

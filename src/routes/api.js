@@ -18,27 +18,33 @@ function trendEndpointPaths(file) {
 module.exports = async function apiRoutes(app) {
   app.get('/api/health', async () => ({ status: 'ok', runtime: 'fastify', timestamp: new Date().toISOString() }));
 
-  const sendCorePacking = async (request, reply) => {
+  const sendCorePacking = (line) => async (request, reply) => {
     try {
-      return await checkCorePacking(request.body || {});
+      return await checkCorePacking({ ...(request.body || {}), line });
     } catch (error) {
       if (error instanceof CorePackingInputError) return reply.code(error.statusCode).send({ error: error.message });
       throw error;
     }
   };
-  const confirmCorePackingResult = async (request, reply) => {
+  const confirmCorePackingResult = (line) => async (request, reply) => {
     try {
-      return await confirmCorePacking(request.body || {});
+      return await confirmCorePacking({ ...(request.body || {}), line });
     } catch (error) {
       if (error instanceof CorePackingInputError) return reply.code(error.statusCode).send({ error: error.message });
       throw error;
     }
   };
 
-  app.post('/api/core-packing/check', sendCorePacking);
-  app.post('/api/core-packing/confirm', confirmCorePackingResult);
-  app.post('/data_send', sendCorePacking);
-  app.post('/data_confirm', confirmCorePackingResult);
+  app.post('/api/core-packing/check', sendCorePacking('line-1'));
+  app.post('/api/core-packing/confirm', confirmCorePackingResult('line-1'));
+  app.post('/api/core-packing/line-1/check', sendCorePacking('line-1'));
+  app.post('/api/core-packing/line-1/confirm', confirmCorePackingResult('line-1'));
+  app.post('/api/core-packing/line-2/check', sendCorePacking('line-2'));
+  app.post('/api/core-packing/line-2/confirm', confirmCorePackingResult('line-2'));
+  app.post('/data_send', sendCorePacking('line-1'));
+  app.post('/data_confirm', confirmCorePackingResult('line-1'));
+  app.post('/data_send2', sendCorePacking('line-2'));
+  app.post('/data_confirm2', confirmCorePackingResult('line-2'));
 
   for (const url of trendEndpointPaths('mc_condition_server.php')) app.get(url, latestConditions);
   for (const url of trendEndpointPaths('mc_chart_data.php')) app.get(url, chartData);

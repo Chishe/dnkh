@@ -11,8 +11,21 @@ test('classifies the same part groups as the Node-RED flow', () => {
   assert.equal(classifyKanban('BFU10730-9900'), 'traceability');
   assert.equal(classifyKanban('XXXXXXXX-9880'), 'water');
   assert.equal(classifyKanban('XXXXXXXX-9910'), 'bypass');
+  assert.equal(classifyKanban('XXXXXXXX-9960', 'line-1'), 'unsupported');
+  assert.equal(classifyKanban('XXXXXXXX-9960', 'line-2'), 'bypass');
   assert.equal(classifyKanban('KN422133-EXTRA'), 'spare');
   assert.equal(classifyKanban('XXXXXXXX-0001'), 'unsupported');
+});
+
+test('keeps line 2 rules separate from line 1', async () => {
+  const line2 = await checkCorePacking({ kanban: 'XXXXXXXX-9960', mc: 2, line: 'line-2' });
+  assert.equal(line2.line, 'line-2');
+  assert.equal(line2.kind, 'bypass');
+  assert.equal(line2.data.judge, 'OK');
+  await assert.rejects(
+    checkCorePacking({ kanban: 'XXXXXXXX-9960', mc: 2, line: 'line-1' }),
+    /not configured/
+  );
 });
 
 test('decodes the legacy core production code without the long function chain', () => {

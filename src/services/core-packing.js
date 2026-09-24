@@ -13,6 +13,7 @@ const PART_GROUPS = Object.freeze({
   ]),
   spare: new Set(['KN422133', 'KN422134', 'KN422135', 'KN422136', 'KN422137', 'KN422173', 'KN422174'])
 });
+const LINE_2_EXTRA_BYPASS = new Set(['9960']);
 
 class CorePackingInputError extends Error {
   constructor(message, statusCode = 400) {
@@ -25,17 +26,19 @@ class CorePackingInputError extends Error {
 function normalizeInput(input = {}) {
   const kanban = String(input.kanban || '').trim();
   const mc = Number(input.mc);
+  const line = String(input.line || 'line-1').trim().toLowerCase();
   if (!kanban) throw new CorePackingInputError('kanban is required');
   if (![1, 2, 3].includes(mc)) throw new CorePackingInputError('mc must be 1, 2, or 3');
-  return { kanban, mc };
+  if (!['line-1', 'line-2'].includes(line)) throw new CorePackingInputError('line must be line-1 or line-2');
+  return { kanban, mc, line };
 }
 
-function classifyKanban(kanban) {
+function classifyKanban(kanban, line = 'line-1') {
   const partCode = kanban.slice(9, 13);
   if (kanban.length <= 13) {
     if (PART_GROUPS.water.has(partCode)) return 'water';
     if (PART_GROUPS.dataGap.has(partCode)) return 'data-gap';
-    if (PART_GROUPS.bypass.has(partCode)) return 'bypass';
+    if (PART_GROUPS.bypass.has(partCode) || (line === 'line-2' && LINE_2_EXTRA_BYPASS.has(partCode))) return 'bypass';
     if (PART_GROUPS.traceability.has(partCode)) return 'traceability';
     return 'unsupported';
   }
@@ -70,9 +73,9 @@ function outputChannel(mc) {
 }
 
 async function checkCorePacking(input, database = packing) {
-  const { kanban, mc } = normalizeInput(input);
-  const kind = classifyKanban(kanban);
-  const common = { kind, channel: outputChannel(mc) };
+  const { kanban, mc, line } = normalizeInput(input);
+  const kind = classifyKanban(kanban, line);
+  const common = { line, kind, channel: outputChannel(mc) };
 
   if (kind === 'water') return result(kanban, mc, '', 'water', common);
   if (kind === 'data-gap') return result(kanban, mc, '', 'dg', common);
@@ -101,7 +104,7 @@ async function checkCorePacking(input, database = packing) {
 }
 
 async function confirmCorePacking(input, database = coreTest) {
-  const { kanban, mc } = normalizeInput(input);
+  const { kanban, mc, line } = normalizeInput(input);
   const date = String(input.nb_date || '').trim();
   const type = String(input.type || '').trim().toLowerCase();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new CorePackingInputError('nb_date must use YYYY-MM-DD');
@@ -114,12 +117,12 @@ async function confirmCorePacking(input, database = coreTest) {
     [kanban.slice(9, 13), date]
   );
   if (!rows.rows.length) {
-    return result(kanban, mc, 'NG', missingValue, { type, channel: outputChannel(mc) });
+    return result(kanban, mc, 'NG', missingValue, { line, type, channel: outputChannel(mc) });
   }
 
   const sourceJudge = String(rows.rows[0].judge || '').trim();
   const judge = sourceJudge === 'OK' ? 'OK' : 'NG';
-  return result(kanban, mc, judge, sourceJudge || 'NG', { type, channel: outputChannel(mc) });
+  return result(kanban, mc, judge, sourceJudge || 'NG', { line, type, channel: outputChannel(mc) });
 }
 
 module.exports = {

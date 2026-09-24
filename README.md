@@ -72,4 +72,12 @@ Content-Type: application/json
 
 Compatibility aliases `POST /data_send` and `POST /data_confirm` accept the same bodies. Point the scanner/client at Fastify port 8800, verify both machines, and only then disable the corresponding Node-RED input to avoid processing the same scan twice.
 
+Line-specific routes are available when two production lines must remain independent:
+
+- Line 1: `POST /api/core-packing/line-1/check` and `POST /api/core-packing/line-1/confirm`
+- Line 2: `POST /api/core-packing/line-2/check` and `POST /api/core-packing/line-2/confirm`
+- Line 2 compatibility aliases: `POST /data_send2` and `POST /data_confirm2`
+
+Line 2 preserves its additional bypass part code `9960`. Every response includes `line` so the caller can verify which rule set handled the request.
+
 The confirm endpoint reads PostgreSQL settings from the `CORE_TEST_DB_*` environment variables in `.env.example`. Never copy a database password into source code or a Node-RED export.

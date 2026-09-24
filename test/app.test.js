@@ -27,6 +27,38 @@ test('core packing API replaces immediate Node-RED branches', async () => {
   assert.equal(app.hasRoute({ method: 'POST', url: '/data_confirm' }), true);
 });
 
+test('line 2 core packing API has separate routes and rules', async () => {
+  const response = await app.inject({
+    method: 'POST',
+    url: '/api/core-packing/line-2/check',
+    payload: { kanban: 'XXXXXXXX-9960', mc: 2 }
+  });
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.json().line, 'line-2');
+  assert.equal(response.json().data.value, 'bypass');
+  assert.equal(app.hasRoute({ method: 'POST', url: '/data_send2' }), true);
+  assert.equal(app.hasRoute({ method: 'POST', url: '/data_confirm2' }), true);
+});
+
+test('core packing pages call their Fastify line APIs without Node-RED', async () => {
+  const [line1, line2, client] = await Promise.all([
+    app.inject({ method: 'GET', url: '/traceability/pokayoke_core_packing.php' }),
+    app.inject({ method: 'GET', url: '/traceability/pokayoke_core_packing2.php' }),
+    app.inject({ method: 'GET', url: '/traceability/core-packing-api.js' })
+  ]);
+  assert.equal(line1.statusCode, 200);
+  assert.equal(line2.statusCode, 200);
+  assert.equal(client.statusCode, 200);
+  assert.match(line1.body, /data-packing-line="line-1"/);
+  assert.match(line2.body, /data-packing-line="line-2"/);
+  assert.match(line1.body, /id="scan-input"/);
+  assert.match(line2.body, /id="scan-input"/);
+  assert.doesNotMatch(line1.body, /192\.168\.2\.101:1880|new WebSocket/i);
+  assert.doesNotMatch(line2.body, /192\.168\.2\.101:1880|new WebSocket/i);
+  assert.match(client.body, /\/api\/core-packing\/\$\{line\}\/check/);
+  assert.match(client.body, /\/api\/core-packing\/\$\{line\}\/confirm/);
+});
+
 test('root and legacy index keep existing entry links working', async () => {
   const root = await app.inject({ method: 'GET', url: '/' });
   const legacy = await app.inject({ method: 'GET', url: '/index.php' });

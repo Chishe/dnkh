@@ -56,99 +56,496 @@
 
 </html>
 <script>
-    var select_date = document.getElementById("selected_date");
-    var today = new Date();
-    var yyyy = today.getFullYear();
-    var mm = today.getMonth() + 1;
-    var dd = today.getDate();
-    if (mm < 10) {
-        mm = '0' + mm;
-    }
-    if (dd < 10) {
-        dd = '0' + dd;
+const selectDate = document.getElementById("selected_date");
+const form = document.getElementById("adjust-search-form");
+const statusText = document.getElementById("adjust-status");
+
+console.log("[INIT] Page loaded");
+console.log("[INIT] selectDate:", selectDate);
+console.log("[INIT] form:", form);
+console.log("[INIT] statusText:", statusText);
+
+
+// ========================================
+// Set today
+// ========================================
+
+const today = new Date();
+
+const yyyy = today.getFullYear();
+const mm = String(today.getMonth() + 1).padStart(2, "0");
+const dd = String(today.getDate()).padStart(2, "0");
+
+selectDate.value = `${yyyy}-${mm}-${dd}`;
+
+console.log("[INIT] Default date:", selectDate.value);
+
+
+// ========================================
+// Search
+// ========================================
+
+form.addEventListener("submit", function (event) {
+
+    event.preventDefault();
+
+    const selectedDate = selectDate.value;
+
+    console.log("--------------------------------");
+    console.log("[SEARCH] Submit");
+    console.log("[SEARCH] Selected date:", selectedDate);
+
+    if (!selectedDate) {
+
+        console.warn("[SEARCH] No date selected");
+
+        statusText.textContent = "Please select a date.";
+
+        return;
     }
 
-    var currentDate = yyyy + '-' + mm + '-' + dd;
-    select_date.value = currentDate;
+    loadData(selectedDate);
+});
 
-    select_date.addEventListener("change", function() {
-        // console.log(select_date.value);
+
+// ========================================
+// Load data
+// ========================================
+
+function loadData(selectedDate) {
+
+    console.log("[LOAD] Start");
+    console.log("[LOAD] Date:", selectedDate);
+
+    statusText.textContent = "Searching...";
+
+    const xhr = new XMLHttpRequest();
+
+    const url = "../server/helium_adjust.php";
+
+    console.log("[LOAD] POST:", url);
+
+    xhr.open(
+        "POST",
+        url,
+        true
+    );
+
+    xhr.setRequestHeader(
+        "Content-Type",
+        "application/x-www-form-urlencoded"
+    );
+
+
+    // Request started
+    xhr.onloadstart = function () {
+        console.log("[LOAD] Request started");
+    };
+
+
+    // Response
+    xhr.onload = function () {
+
+        console.log("[LOAD] Response received");
+        console.log("[LOAD] HTTP Status:", xhr.status);
+        console.log("[LOAD] Raw response:", xhr.responseText);
+
+        if (xhr.status !== 200) {
+
+            console.error(
+                "[LOAD] HTTP Error:",
+                xhr.status
+            );
+
+            console.error(
+                "[LOAD] Response:",
+                xhr.responseText
+            );
+
+            statusText.textContent =
+                "Error fetching data.";
+
+            return;
+        }
+
+        try {
+
+            const response =
+                JSON.parse(xhr.responseText);
+
+            console.log(
+                "[LOAD] Parsed JSON:",
+                response
+            );
+
+            console.log(
+                "[LOAD] Is array:",
+                Array.isArray(response)
+            );
+
+            if (!Array.isArray(response)) {
+
+                console.error(
+                    "[LOAD] Invalid response format:",
+                    response
+                );
+
+                statusText.textContent =
+                    "Invalid server response.";
+
+                return;
+            }
+
+            console.log(
+                "[LOAD] Records:",
+                response.length
+            );
+
+            if (response.length > 0) {
+
+                console.table(response);
+
+            } else {
+
+                console.warn(
+                    "[LOAD] No pending records"
+                );
+            }
+
+
+            displayData(
+                response,
+                selectedDate
+            );
+
+
+            statusText.textContent =
+                `${response.length} pending record(s) found.`;
+
+        } catch (error) {
+
+            console.error(
+                "[LOAD] JSON parse error:",
+                error
+            );
+
+            console.error(
+                "[LOAD] Raw server response:",
+                xhr.responseText
+            );
+
+            statusText.textContent =
+                "Invalid response from server.";
+        }
+    };
+
+
+    // Network error
+    xhr.onerror = function () {
+
+        console.error(
+            "[LOAD] Network error"
+        );
+
+        statusText.textContent =
+            "Cannot connect to server.";
+    };
+
+
+    // Request finished
+    xhr.onloadend = function () {
+
+        console.log(
+            "[LOAD] Request finished"
+        );
+
+    };
+
+
+    const requestData =
+        "date=" + encodeURIComponent(selectedDate);
+
+    console.log(
+        "[LOAD] Sending:",
+        requestData
+    );
+
+    xhr.send(requestData);
+}
+
+
+// ========================================
+// Display table
+// ========================================
+
+function displayData(
+    data,
+    selectedDate
+) {
+
+    console.log("--------------------------------");
+    console.log("[DISPLAY] Start");
+    console.log("[DISPLAY] Date:", selectedDate);
+    console.log("[DISPLAY] Data:", data);
+    console.log("[DISPLAY] Rows:", data.length);
+
+    const tableBody =
+        document.querySelector("#pokayoke tbody");
+
+    if (!tableBody) {
+
+        console.error(
+            "[DISPLAY] #pokayoke tbody NOT FOUND"
+        );
+
+        return;
+    }
+
+    tableBody.innerHTML = "";
+
+
+    // No data
+    if (data.length === 0) {
+
+        console.warn(
+            "[DISPLAY] No data"
+        );
+
+        const tr =
+            document.createElement("tr");
+
+        tr.className =
+            "adjust-empty-row";
+
+        tr.innerHTML = `
+            <td colspan="6">
+                No pending records found.
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
+
+        return;
+    }
+
+
+    // Display rows
+    data.forEach(function (row, index) {
+
+        console.log(
+            `[DISPLAY] Row ${index + 1}:`,
+            row
+        );
+
+        const tr =
+            document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${row.core_code ?? ""}</td>
+            <td>${row.core_part_no ?? ""}</td>
+            <td>${row.assy_code ?? ""}</td>
+            <td>${row.assy_line ?? ""}</td>
+            <td>${row.nb_pd ?? ""}</td>
+
+            <td>
+                <button
+                    type="button"
+                    class="pass-btn"
+                    data-core-code="${row.core_code}">
+                    Pass
+                </button>
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
     });
 
-    document.getElementById("search").addEventListener("click", function() {
-        var selectedDate = select_date.value;
 
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "../server/helium_adjust.php", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    console.log(
+        "[DISPLAY] Table rendered"
+    );
 
-        xhr.onload = function() {
-            if (xhr.status == 200) {
-                var response = JSON.parse(xhr.responseText);
-                displayData(response, selectedDate); 
-            } else {
-                alert("Error fetching data.");
+
+    // ========================================
+    // Pass buttons
+    // ========================================
+
+    const buttons =
+        document.querySelectorAll(".pass-btn");
+
+    console.log(
+        "[DISPLAY] Pass buttons:",
+        buttons.length
+    );
+
+
+    buttons.forEach(function (button) {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                const coreCode =
+                    this.getAttribute(
+                        "data-core-code"
+                    );
+
+                console.log("--------------------------------");
+                console.log("[PASS] Button clicked");
+                console.log("[PASS] Core code:", coreCode);
+                console.log("[PASS] Date:", selectedDate);
+
+                updateDatabase(
+                    coreCode,
+                    selectedDate,
+                    this
+                );
             }
-        };
-
-        xhr.send("date=" + selectedDate);
+        );
     });
+}
 
-    function displayData(data, selectedDate) {
-        var tableBody = document.querySelector("#pokayoke tbody");
-        tableBody.innerHTML = "";
 
-        data.forEach(function(row) {
-            var tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${row.core_code}</td>
-                <td>${row.core_part_no}</td>
-                <td>${row.assy_code}</td>
-                <td>${row.assy_line}</td>
-                <td>${row.nb_pd}</td>
-                <td>
-                    <button class="pass-btn" data-core-code="${row.core_code}">pass</button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
+// ========================================
+// Update database
+// ========================================
 
-        document.querySelectorAll(".pass-btn").forEach(button => {
-            button.addEventListener("click", function() {
-                var coreCode = this.getAttribute("data-core-code");
+function updateDatabase(
+    coreCode,
+    selectedDate,
+    button
+) {
 
-                updateDatabase(coreCode, selectedDate);
-            });
-        });
-    }
+    console.log("[UPDATE] Start");
+    console.log("[UPDATE] Core code:", coreCode);
 
-    function updateDatabase(coreCode, selectedDate) {
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", "../server/helium_update.php", true);
-        xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    button.disabled = true;
+    button.textContent = "Updating...";
 
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                alert("Status updated successfully.");
-                var xhrRefresh = new XMLHttpRequest();
-                xhrRefresh.open("POST", "../server/helium_adjust.php", true);
-                xhrRefresh.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+    const xhr =
+        new XMLHttpRequest();
 
-                xhrRefresh.onload = function() {
-                    if (xhrRefresh.status == 200) {
-                        var response = JSON.parse(xhrRefresh.responseText);
-                        displayData(response, selectedDate); 
-                    } else {
-                        alert("Error fetching updated data.");
-                    }
-                };
+    const url =
+        "../server/helium_update.php";
 
-                xhrRefresh.send("date=" + selectedDate);
-            } else {
-                alert("Error updating status.");
-            }
-        };
+    console.log(
+        "[UPDATE] POST:",
+        url
+    );
 
-        xhr.send("core_code=" + coreCode);
-    }
+
+    xhr.open(
+        "POST",
+        url,
+        true
+    );
+
+
+    xhr.setRequestHeader(
+        "Content-Type",
+        "application/x-www-form-urlencoded"
+    );
+
+
+    xhr.onloadstart = function () {
+
+        console.log(
+            "[UPDATE] Request started"
+        );
+
+    };
+
+
+    xhr.onload = function () {
+
+        console.log(
+            "[UPDATE] Response received"
+        );
+
+        console.log(
+            "[UPDATE] HTTP Status:",
+            xhr.status
+        );
+
+        console.log(
+            "[UPDATE] Raw response:",
+            xhr.responseText
+        );
+
+
+        if (xhr.status === 200) {
+
+            console.log(
+                "[UPDATE] SUCCESS"
+            );
+
+            statusText.textContent =
+                `Core ${coreCode} updated successfully.`;
+
+
+            console.log(
+                "[UPDATE] Reloading table..."
+            );
+
+            loadData(selectedDate);
+
+        } else {
+
+            console.error(
+                "[UPDATE] FAILED"
+            );
+
+            console.error(
+                "[UPDATE] Response:",
+                xhr.responseText
+            );
+
+            statusText.textContent =
+                "Error updating status.";
+
+            button.disabled = false;
+
+            button.textContent =
+                "Pass";
+        }
+    };
+
+
+    xhr.onerror = function () {
+
+        console.error(
+            "[UPDATE] Network error"
+        );
+
+        statusText.textContent =
+            "Cannot connect to server.";
+
+        button.disabled = false;
+
+        button.textContent =
+            "Pass";
+    };
+
+
+    xhr.onloadend = function () {
+
+        console.log(
+            "[UPDATE] Request finished"
+        );
+
+    };
+
+
+const requestData =
+    "core_code=" + encodeURIComponent(coreCode) +
+    "&date=" + encodeURIComponent(selectedDate);
+
+    console.log(
+        "[UPDATE] Sending:",
+        requestData
+    );
+
+
+    xhr.send(requestData);
+}
 </script>
